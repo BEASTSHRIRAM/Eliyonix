@@ -199,13 +199,37 @@ export default function Dashboard() {
     setShowRecommendationModal(true)
     setModalLoading(true)
     try {
-      const response = await fetch(`/recommendations/${component}`)
+      // Call the AI recommendation API that analyzes 7 days of data
+      const response = await fetch(`/api/recommendations/ai?village_id=KA_001`)
       const data = await response.json()
-      if (data.recommendation) {
-        setModalRecommendation(data.recommendation)
+      
+      if (data.status === 'success') {
+        // Transform the AI recommendations into farmer-friendly format
+        const aiRecommendations = {
+          component: component,
+          village_id: data.village_id,
+          analysis_period: data.analysis_period,
+          data_points_analyzed: data.data_points_analyzed,
+          analysis: data.analysis,
+          recommendations: data.recommendations.slice(0, 3), // Top 3 recommendations
+          generated_at: data.generated_at
+        }
+        setModalRecommendation(aiRecommendations)
+      } else {
+        // Fallback if AI recommendations not available
+        setModalRecommendation({
+          component: component,
+          error: data.message || 'Unable to generate recommendations',
+          recommendations: []
+        })
       }
     } catch (error) {
-      console.error('Error fetching recommendation:', error)
+      console.error('Error fetching AI recommendation:', error)
+      setModalRecommendation({
+        component: component,
+        error: 'Failed to connect to recommendation service',
+        recommendations: []
+      })
     } finally {
       setModalLoading(false)
     }

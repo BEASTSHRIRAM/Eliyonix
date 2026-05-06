@@ -14,6 +14,7 @@ from .grid_state import SensorData
 from .vector_store import get_vector_store
 from .recommendation_scheduler import get_scheduler, create_scheduler
 from .agents.recommendation_agent import RecommendationAgent
+from .recommendation_engine import get_recommendation_engine
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -397,11 +398,44 @@ async def get_component_recommendation(request):
             'recommendation': None
         }, status_code=500)
 
+
+async def get_ai_recommendations(request):
+    """
+    Get AI recommendations based on 7-day historical patterns from Qdrant
+    Uses semantic search to analyze patterns and provide intelligent suggestions
+    """
+    try:
+        # Get village_id from query params (default to KA_001)
+        village_id = request.query_params.get('village_id', 'KA_001')
+        
+        # Get current sensor data if provided
+        current_sensor_data = None
+        if request.method == 'POST':
+            body = await request.json()
+            current_sensor_data = body.get('current_sensor_data')
+        
+        logger.info(f"Generating AI recommendations for village: {village_id}")
+        
+        # Get recommendation engine and generate recommendations
+        engine = get_recommendation_engine()
+        result = await engine.get_recommendations(village_id, current_sensor_data)
+        
+        return JSONResponse(result)
+        
+    except Exception as e:
+        logger.error(f"Error generating AI recommendations: {e}", exc_info=True)
+        return JSONResponse({
+            'status': 'error',
+            'message': str(e),
+            'recommendations': []
+        }, status_code=500)
+
 app.add_route("/health", http_health, methods=["GET"])
 app.add_route("/agent/status", agent_status, methods=["GET"])
 app.add_route("/invoke", http_invoke, methods=["POST"])
 app.add_route("/solar-selection", solar_selection, methods=["POST"])
 app.add_route("/recommendations", get_recommendations, methods=["GET"])
+app.add_route("/recommendations/ai", get_ai_recommendations, methods=["GET", "POST"])
 app.add_route("/recommendations/{component}", get_component_recommendation, methods=["GET"])
 app.add_route("/recommendations/history", get_recommendation_history, methods=["GET"])
 app.add_route("/recommendations/trigger", trigger_recommendations, methods=["POST"])

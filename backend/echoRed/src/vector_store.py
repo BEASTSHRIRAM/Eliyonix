@@ -75,7 +75,14 @@ class SimpleEmbedding:
         ])
         
         # Time-of-day features (sine/cosine encoding)
-        hour = datetime.fromisoformat(snapshot.get('timestamp', datetime.now().isoformat())).hour
+        timestamp = snapshot.get('timestamp', datetime.now().isoformat())
+        if isinstance(timestamp, str):
+            hour = datetime.fromisoformat(timestamp).hour
+        elif isinstance(timestamp, (int, float)):
+            hour = datetime.fromtimestamp(timestamp).hour
+        else:
+            hour = datetime.now().hour
+        
         features.extend([
             np.sin(2 * np.pi * hour / 24),
             np.cos(2 * np.pi * hour / 24),

@@ -159,6 +159,43 @@ export const selectSolarBrand = async (brand, farmerId = 'farmer_001') => {
   }
 };
 
+/**
+ * Get AI recommendations based on 7-day historical patterns
+ * Uses semantic search on vector DB to provide intelligent suggestions
+ * @param {string} villageId - Village ID (default: KA_001)
+ * @param {Object} currentSensorData - Optional current sensor readings
+ * @returns {Promise<Object>} - AI recommendations with analysis
+ */
+export const getAIRecommendations = async (villageId = 'KA_001', currentSensorData = null) => {
+  try {
+    const url = `${API_BASE_URL}/recommendations/ai?village_id=${villageId}`;
+    
+    const options = {
+      method: currentSensorData ? 'POST' : 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    if (currentSensorData) {
+      options.body = JSON.stringify({
+        current_sensor_data: currentSensorData,
+      });
+    }
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting AI recommendations:', error);
+    throw error;
+  }
+};
+
 export default {
   sendSensorData,
   detectFaults,
@@ -166,4 +203,5 @@ export default {
   getAgentStatus,
   healthCheck,
   selectSolarBrand,
+  getAIRecommendations,
 };

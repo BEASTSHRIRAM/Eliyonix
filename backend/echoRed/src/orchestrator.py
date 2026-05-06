@@ -14,6 +14,7 @@ from .agents import (
     alert_dispatcher_node,
     recommendation_agent_node,
 )
+from .qdrant_store import get_qdrant_store
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,35 @@ class VidyutSevaOrchestrator:
         
         # Run the pipeline
         result = await self.compiled_pipeline.ainvoke(initial_state)
+        
+        # Store data in Qdrant after pipeline completes
+        try:
+            qdrant = get_qdrant_store()
+            
+            # Store sensor reading (all readings, faulty or not)
+            await qdrant.store_sensor_reading(
+                sensor_data=sensor_data,
+                anomaly_score=result.get("anomaly_score", 0.0),
+                fault_detected=result.get("fault_detected", False),
+                fault_type=result.get("fault_type")
+            )
+            
+            # Store fault event if detected
+            if result.get("fault_detected") and result.get("should_alert"):
+                await qdrant.store_fault_event(
+                    sensor_data=sensor_data,
+                    anomaly_score=result.get("anomaly_score", 0.0),
+                    fault_type=result.get("fault_type", "unknown"),
+                    should_alert=result.get("should_alert", False),
+                    alert_message=result.get("alert_message", "")
+                )
+                logger.info(f"Stored fault event in Qdrant: {result.get('fault_type')}")
+            
+            logger.info(f"Stored sensor reading in Qdrant for {sensor_data['village_id']}")
+            
+        except Exception as e:
+            logger.error(f"Failed to store in Qdrant: {e}")
+            # Don't fail the pipeline if storage fails
         
         logger.info(
             f"Execution {execution_id} complete. "
