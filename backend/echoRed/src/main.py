@@ -61,6 +61,7 @@ async def _invoke_agent(payload: dict) -> dict:
             "execution_id": result["execution_id"],
             "should_alert": result.get("should_alert", False),
             "alert_message": result.get("alert_message", ""),
+            "telegram_status": result.get("telegram_status"),
             "fault_detected": result["fault_detected"],
             "anomaly_score": float(result["anomaly_score"]),
             "fault_type": result.get("fault_type", "unknown"),

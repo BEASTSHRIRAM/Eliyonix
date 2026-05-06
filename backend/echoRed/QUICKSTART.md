@@ -238,6 +238,21 @@ export LOCAL_DEV=1
 
 # Bedrock model
 export BEDROCK_MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
+
+# Telegram farmer alerts
+export TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+export TELEGRAM_DEFAULT_CHAT_ID=default_farmer_or_group_chat_id
+
+# Optional: route alerts by village or farmer ID
+export TELEGRAM_CHAT_ID_KA_001=farmer_chat_id_for_village_KA_001
+export TELEGRAM_CHAT_ID_FARMER_001=chat_id_for_farmer_001
+
+# Optional MCP Gateway mode for the Alert Dispatcher tool call
+export GATEWAY_URL=your_agentcore_gateway_streamable_http_url
+export COGNITO_TOKEN_URL=your_cognito_token_url
+export COGNITO_CLIENT_ID=your_cognito_client_id
+export COGNITO_CLIENT_SECRET=your_cognito_client_secret
+export COGNITO_SCOPE=your_gateway_scope
 ```
 
 ### Customization

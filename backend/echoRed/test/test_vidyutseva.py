@@ -12,6 +12,13 @@ from src.orchestrator import get_orchestrator, reset_orchestrator
 from src.a2a_protocol import get_message_broker, reset_message_broker, create_query_message
 from src.memory_store import get_memory_store, InMemoryStore, set_memory_store
 from src.bedrock_integration import BedrockAlertGenerator
+from src.telegram_notifier import (
+    TelegramDeliveryResult,
+    TelegramNotifier,
+    resolve_telegram_chat_id,
+    set_telegram_notifier,
+)
+from src.telegram_mcp_tool import build_telegram_tool_args
 
 
 @pytest.fixture(autouse=True)
@@ -21,12 +28,14 @@ def setup_teardown():
     reset_orchestrator()
     reset_message_broker()
     set_memory_store(InMemoryStore())
+    set_telegram_notifier(None)
     
     yield
     
     # Teardown
     reset_orchestrator()
     reset_message_broker()
+    set_telegram_notifier(None)
 
 
 class TestFaultDetection:
@@ -158,6 +167,89 @@ class TestAlertDispatcher:
         # If it's a demand spike, alert should be prevented
         if result["is_demand_spike"]:
             assert result["should_alert"] == False
+
+
+class FakeTelegramNotifier(TelegramNotifier):
+    def __init__(self):
+        super().__init__(bot_token="fake-token")
+        self.sent_messages = []
+
+    async def send_message(self, text, chat_id):
+        self.sent_messages.append({"text": text, "chat_id": chat_id})
+        return TelegramDeliveryResult(
+            enabled=True,
+            sent=True,
+            status="sent",
+            chat_id=str(chat_id),
+        )
+
+
+class TestTelegramNotifier:
+    """Test Telegram farmer alert integration"""
+
+    def test_resolve_chat_id_from_sensor_data(self):
+        sensor_data = {
+            "village_id": "KA_001",
+            "telegram_chat_id": "123456",
+        }
+
+        assert resolve_telegram_chat_id(sensor_data) == "123456"
+
+    def test_resolve_chat_id_from_village_environment(self, monkeypatch):
+        monkeypatch.setenv("TELEGRAM_CHAT_ID_KA_001", "987654")
+
+        sensor_data = {"village_id": "KA_001"}
+
+        assert resolve_telegram_chat_id(sensor_data) == "987654"
+
+    @pytest.mark.asyncio
+    async def test_alert_dispatcher_sends_telegram_when_alerting(self):
+        from src.agents.alert_dispatcher import AlertDispatcher
+
+        fake_notifier = FakeTelegramNotifier()
+        set_telegram_notifier(fake_notifier)
+
+        dispatcher = AlertDispatcher()
+        await dispatcher.initialize()
+        state = create_empty_grid_state(
+            {
+                "voltage": 440.0,
+                "current": 5.0,
+                "temperature": 45.0,
+                "timestamp": datetime.now().timestamp(),
+                "inverter_id": "INV_002",
+                "village_id": "KA_002",
+                "telegram_chat_id": "555111",
+            },
+            "test-execution",
+        )
+        state["fault_detected"] = True
+        state["is_demand_spike"] = False
+        state["anomaly_score"] = 0.95
+        state["fault_type"] = "inverter_overvoltage"
+
+        result = await dispatcher.execute(state)
+
+        assert result["should_alert"] == True
+        assert result["telegram_status"]["sent"] == True
+        assert result["telegram_status"]["tool_name"] == "telegram_notify_farmer"
+        assert result["telegram_status"]["transport"] == "local_mcp_contract"
+        assert fake_notifier.sent_messages[0]["chat_id"] == "555111"
+
+    def test_build_telegram_mcp_tool_args(self):
+        sensor_data = {
+            "village_id": "KA_002",
+            "inverter_id": "INV_002",
+            "telegram_chat_id": "555111",
+        }
+
+        args = build_telegram_tool_args(sensor_data, "Fault message", "inverter_fault", 0.91)
+
+        assert args["tool_name"] == "telegram_notify_farmer"
+        assert args["message"] == "Fault message"
+        assert args["chat_id"] == "555111"
+        assert args["village_id"] == "KA_002"
+        assert args["fault_type"] == "inverter_fault"
 
 
 class TestA2AMessaging:

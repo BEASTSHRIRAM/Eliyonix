@@ -39,6 +39,7 @@ class A2AMessageBroker:
             self.message_queue[to_agent] = []
         
         self.message_queue[to_agent].append(message)
+        self.processed_message_ids.add(message_id)
         logger.info(f"A2A Message {message_id}: {message['from_agent']} -> {to_agent}")
         
         return message_id

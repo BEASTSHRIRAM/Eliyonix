@@ -100,6 +100,7 @@ class GridState(TypedDict):
     should_alert: bool
     alert_message: Optional[str]
     alert_language: str  # "kannada", "hindi", "english"
+    telegram_status: Optional[Dict[str, Any]]
     alert_dispatcher_memory: Optional[Dict[str, Any]]
     
     # Recommendation Agent outputs
@@ -140,6 +141,7 @@ def create_empty_grid_state(sensor_data: SensorData, execution_id: str) -> GridS
         "should_alert": False,
         "alert_message": None,
         "alert_language": "kannada",
+        "telegram_status": None,
         "alert_dispatcher_memory": None,
         "recommendations": None,
         "recommendation_memory": None,
