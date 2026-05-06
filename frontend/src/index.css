@@ -211,3 +211,444 @@ body {
   .sidebar { display: none; }
   .main-with-sidebar { margin-left: 0 !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   USER TYPE MODAL
+   ═══════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; animation: modalFadeIn 0.3s ease forwards;
+}
+@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-content {
+  position: relative; max-width: 780px; width: 100%;
+  animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-close-btn {
+  position: absolute; top: -48px; right: 0;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.6); cursor: pointer;
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.modal-close-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+.user-type-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.user-type-card {
+  position: relative; overflow: hidden;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 32px 28px;
+  text-align: left; cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column; gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+}
+.user-type-card:hover {
+  background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2);
+  transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.user-type-card-glow {
+  position: absolute; top: -60px; right: -60px;
+  width: 180px; height: 180px; border-radius: 50%;
+  filter: blur(60px); opacity: 0; transition: opacity 0.4s; pointer-events: none;
+}
+.farmer-glow { background: rgba(74, 222, 128, 0.3); }
+.enterprise-glow { background: rgba(96, 165, 250, 0.3); }
+.user-type-card:hover .user-type-card-glow { opacity: 1; }
+
+.user-type-card-icon {
+  width: 64px; height: 64px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 8px; transition: transform 0.3s;
+}
+.farmer-icon { background: rgba(74, 222, 128, 0.12); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2); }
+.enterprise-icon { background: rgba(96, 165, 250, 0.12); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.2); }
+.user-type-card:hover .user-type-card-icon { transform: scale(1.08); }
+
+.user-type-card-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2);
+  font-size: 10px; color: #4ade80; font-weight: 600;
+  letter-spacing: 0.3px; text-transform: uppercase;
+  width: fit-content; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;
+}
+.enterprise-badge { background: rgba(96, 165, 250, 0.1); border-color: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+
+.user-type-card-title { font-size: 22px; color: #fff; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 4px; }
+.user-type-card-desc { font-size: 14px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 12px; }
+.user-type-card-features { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.user-type-card-features li { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.4; }
+
+.user-type-card-cta {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 10px;
+  background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2);
+  color: #4ade80; font-size: 13px; font-weight: 600;
+  transition: all 0.25s; width: fit-content; margin-top: auto;
+}
+.enterprise-cta { background: rgba(96, 165, 250, 0.1); border-color: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+.user-type-card:hover .user-type-card-cta { gap: 12px; }
+
+@media (max-width: 640px) { .user-type-cards { grid-template-columns: 1fr; } }
+
+/* ═══════════════════════════════════════════════════════════
+   FARMER DASHBOARD
+   ═══════════════════════════════════════════════════════════ */
+.farmer-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(165deg, #0a0f1c 0%, #0d1525 40%, #0a1a14 100%);
+  padding-bottom: 40px;
+}
+.farmer-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.2); backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 50;
+}
+.farmer-weather-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+}
+.farmer-switch-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 7px 14px; border-radius: 8px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 500;
+  text-decoration: none; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.farmer-switch-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+
+.farmer-ticker {
+  display: flex; align-items: center; gap: 10px; padding: 12px 24px;
+  background: rgba(74, 222, 128, 0.06); border-bottom: 1px solid rgba(74, 222, 128, 0.1);
+}
+.farmer-ticker-text { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4ade80; letter-spacing: 0.2px; }
+.farmer-ticker-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: pulse-dot 1.5s ease-in-out infinite; margin-left: auto; }
+
+.farmer-gauge-section { padding: 40px 24px 24px; text-align: center; }
+
+.farmer-cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 0 24px; margin-bottom: 20px; }
+
+.farmer-status-card {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px; padding: 24px 20px; text-align: center;
+  position: relative; overflow: hidden; transition: all 0.25s;
+}
+.farmer-status-card:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+
+.farmer-card-pulse {
+  position: absolute; top: 12px; right: 12px;
+  width: 8px; height: 8px; border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.farmer-sensor-strip {
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  padding: 0; margin: 0 24px 20px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; overflow: hidden;
+}
+.farmer-sensor-item { flex: 1; display: flex; align-items: center; gap: 12px; padding: 18px 20px; }
+.farmer-sensor-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.08); }
+
+.farmer-section-card {
+  margin: 0 24px 20px; padding: 20px 22px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px;
+}
+.farmer-section-header {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.farmer-alert-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  animation: fadeSlideUp 0.4s ease forwards;
+}
+.farmer-alert-item:last-child { border-bottom: none; }
+
+.farmer-actions { display: flex; gap: 14px; padding: 0 24px; margin-bottom: 24px; }
+
+.farmer-action-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px 24px; border-radius: 14px;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.25s; border: none;
+}
+.farmer-action-btn.primary {
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  color: #0a1a14; box-shadow: 0 4px 20px rgba(74, 222, 128, 0.25);
+}
+.farmer-action-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(74, 222, 128, 0.35); }
+.farmer-action-btn.secondary {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.7);
+}
+.farmer-action-btn.secondary:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.farmer-footer { text-align: center; padding: 24px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 12px; }
+
+.farmer-action-btn.secondary:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+@media (max-width: 700px) {
+  .farmer-cards-row { grid-template-columns: 1fr; }
+  .farmer-sensor-strip { flex-direction: column; }
+  .farmer-sensor-divider { width: 80%; height: 1px; }
+  .farmer-actions { flex-direction: column; }
+  .farmer-switch-btn { display: none; }
+}
+
+/* Live farmer dashboard: match enterprise dashboard palette */
+.farmer-dashboard {
+  min-height: 100vh;
+  background: #f8f8f8;
+  padding-bottom: 48px;
+  color: var(--eliyonix-ink);
+}
+.farmer-topbar {
+  min-height: 62px;
+  padding: 0 32px;
+  background: #fff;
+  border-bottom: 1px solid var(--eliyonix-hairline);
+  backdrop-filter: none;
+}
+.farmer-topbar h1 {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+  color: var(--eliyonix-ink);
+  margin: 0;
+}
+.farmer-topbar .font-mono-e { color: var(--eliyonix-muted); font-size: 11px; }
+.farmer-back-link {
+  color: var(--eliyonix-muted);
+  display: inline-flex;
+  align-items: center;
+}
+.farmer-main {
+  padding: 28px 32px;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.farmer-switch-btn {
+  background: #fff;
+  border: 1px solid var(--eliyonix-hairline);
+  color: var(--eliyonix-ink);
+}
+.farmer-switch-btn:hover {
+  background: var(--eliyonix-stone);
+  color: var(--eliyonix-ink);
+}
+.farmer-ticker {
+  background: var(--eliyonix-pale-green);
+  border: 1px solid rgba(0,180,100,0.18);
+  border-radius: 12px;
+  color: var(--eliyonix-ink);
+  padding: 12px 16px;
+  justify-content: space-between;
+}
+.farmer-ticker svg { color: #00b464; }
+.farmer-ticker span:not(.chip) {
+  color: var(--eliyonix-ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.farmer-health-card {
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.farmer-health-card h2 {
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 400;
+  color: var(--eliyonix-ink);
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.farmer-health-card p {
+  font-size: 15px;
+  color: var(--eliyonix-muted);
+  line-height: 1.6;
+  max-width: 460px;
+}
+.farmer-gauge {
+  width: 184px;
+  height: 184px;
+  position: relative;
+  flex: 0 0 auto;
+}
+.farmer-gauge-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--eliyonix-ink);
+}
+.farmer-gauge-value span {
+  font-size: 52px;
+  letter-spacing: -1px;
+}
+.farmer-gauge-value small {
+  color: var(--eliyonix-muted);
+  font-size: 16px;
+}
+.farmer-cards-row {
+  padding: 0;
+  margin: 0;
+}
+.farmer-status-card {
+  background: #fff;
+  border: 1px solid var(--eliyonix-hairline);
+  border-left: 3px solid #00b464;
+  border-radius: 12px;
+  padding: 22px;
+  text-align: left;
+  display: flex;
+  gap: 16px;
+}
+.farmer-status-card:hover {
+  background: #fff;
+  box-shadow: none;
+}
+.farmer-section-card {
+  margin: 0;
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid var(--eliyonix-hairline);
+  border-radius: 12px;
+}
+.farmer-section-header {
+  border-bottom: 1px solid var(--eliyonix-hairline);
+}
+.farmer-section-header .font-grotesk {
+  color: var(--eliyonix-ink);
+  font-size: 17px;
+}
+.farmer-agent-dot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  color: var(--eliyonix-ink);
+  font-size: 14px;
+}
+.farmer-agent-dot .chip { margin-left: auto; }
+.farmer-sensor-strip {
+  margin: 0;
+  background: #fff;
+  border: 1px solid var(--eliyonix-hairline);
+  border-radius: 12px;
+}
+.farmer-sensor-item {
+  color: var(--eliyonix-muted);
+}
+.farmer-sensor-item span {
+  font-size: 13px;
+}
+.farmer-sensor-item strong {
+  margin-left: auto;
+  color: var(--eliyonix-ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+}
+.farmer-sensor-divider { background: var(--eliyonix-hairline); }
+.farmer-alert-item {
+  color: var(--eliyonix-ink);
+  border-bottom: 1px solid var(--eliyonix-hairline);
+  gap: 12px;
+  justify-content: flex-start;
+}
+.farmer-alert-item.muted { color: var(--eliyonix-muted); }
+.farmer-live-feed {
+  padding: 18px 20px;
+  border-radius: 16px;
+}
+.farmer-live-feed .font-grotesk {
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.farmer-live-feed .font-mono-e {
+  color: rgba(74,222,128,0.72);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.farmer-actions {
+  padding: 0;
+  margin: 0;
+}
+.farmer-action-btn {
+  border-radius: 12px;
+}
+.farmer-action-btn.primary {
+  background: var(--eliyonix-near-black);
+  color: #fff;
+  box-shadow: none;
+}
+.farmer-action-btn.secondary {
+  background: #fff;
+  border: 1px solid var(--eliyonix-hairline);
+  color: var(--eliyonix-ink);
+}
+.enterprise-stat {
+  padding: 24px 22px;
+  position: relative;
+  overflow: hidden;
+}
+.enterprise-stat > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+}
+.enterprise-stat .mono-label {
+  color: var(--eliyonix-muted);
+  font-size: 10px;
+}
+.enterprise-stat strong {
+  display: block;
+  font-size: 38px;
+  font-weight: 400;
+  color: var(--eliyonix-ink);
+  letter-spacing: -1px;
+  line-height: 1;
+  margin: 8px 0;
+}
+.enterprise-stat small {
+  color: var(--eliyonix-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .farmer-topbar {
+    padding: 12px 20px;
+  }
+  .farmer-main {
+    padding: 20px;
+  }
+  .farmer-health-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

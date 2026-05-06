@@ -15,6 +15,7 @@ from .vector_store import get_vector_store
 from .recommendation_scheduler import get_scheduler, create_scheduler
 from .agents.recommendation_agent import RecommendationAgent
 from .recommendation_engine import get_recommendation_engine
+from .live_state import get_live_state, update_live_state
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -70,6 +71,7 @@ async def _invoke_agent(payload: dict) -> dict:
             "recommendations": result.get("recommendations", {}),
             "errors": result.get("errors", []),
         }
+        update_live_state(sensor_data, response)
         
         logger.info(f"Alert decision: {response['should_alert']}")
         return response
@@ -194,6 +196,28 @@ async def http_invoke(request):
             "alert_message": "",
             "fault_detected": False,
         }, status_code=500)
+
+
+async def mqtt_publish(request):
+    """HTTP bridge for MQTT subscribers to publish sensor messages into the agent pipeline."""
+    try:
+        payload = await request.json()
+        sensor_data = payload.get("sensor_data", payload)
+        result = await _invoke_agent({"sensor_data": sensor_data})
+        return JSONResponse({
+            "status": "published",
+            "topic": payload.get("topic"),
+            "result": result,
+        })
+    except Exception as e:
+        logger.error(f"Error processing MQTT publish: {e}", exc_info=True)
+        return JSONResponse({"status": "error", "error": str(e)}, status_code=500)
+
+
+async def live_grid_state(request):
+    """Read latest MQTT-fed grid state for dashboards."""
+    village_id = request.query_params.get("village_id")
+    return JSONResponse(get_live_state(village_id))
 
 
 # Recommendation endpoints
@@ -434,6 +458,8 @@ async def get_ai_recommendations(request):
 app.add_route("/health", http_health, methods=["GET"])
 app.add_route("/agent/status", agent_status, methods=["GET"])
 app.add_route("/invoke", http_invoke, methods=["POST"])
+app.add_route("/mqtt/publish", mqtt_publish, methods=["POST"])
+app.add_route("/grid/live", live_grid_state, methods=["GET"])
 app.add_route("/solar-selection", solar_selection, methods=["POST"])
 app.add_route("/recommendations", get_recommendations, methods=["GET"])
 app.add_route("/recommendations/ai", get_ai_recommendations, methods=["GET", "POST"])
