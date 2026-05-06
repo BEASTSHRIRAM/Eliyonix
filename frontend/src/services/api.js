@@ -3,7 +3,7 @@
  * Handles all communication with the backend
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Types for sensor data
 export const SensorDataTypes = {
@@ -19,14 +19,12 @@ export const SensorDataTypes = {
  */
 export const sendSensorData = async (sensorData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/invocations`, {
+    const response = await fetch(`${API_BASE_URL}/invoke`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        input: sensorData,
-      }),
+      body: JSON.stringify({ sensor_data: sensorData }),
     });
 
     if (!response.ok) {
@@ -196,6 +194,31 @@ export const getAIRecommendations = async (villageId = 'KA_001', currentSensorDa
   }
 };
 
+export const getLiveGridState = async (villageId = null) => {
+  const query = villageId ? `?village_id=${encodeURIComponent(villageId)}` : '';
+  const response = await fetch(`${API_BASE_URL}/grid/live${query}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const publishMqttSensorMessage = async (topic, sensorData) => {
+  const response = await fetch(`${API_BASE_URL}/mqtt/publish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topic, sensor_data: sensorData }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+
 export default {
   sendSensorData,
   detectFaults,
@@ -204,4 +227,6 @@ export default {
   healthCheck,
   selectSolarBrand,
   getAIRecommendations,
+  getLiveGridState,
+  publishMqttSensorMessage,
 };

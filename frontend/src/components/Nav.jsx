@@ -2,15 +2,23 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { X, Menu } from 'lucide-react'
 import LogoIcon from './LogoIcon'
+import UserTypeModal from './UserTypeModal'
 
-export default function Nav() {
+export default function Nav({ onDemoClick }) {
   const [barClosed, setBarClosed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [localModalOpen, setLocalModalOpen] = useState(false)
   const location = useLocation()
   const isLanding = location.pathname === '/'
+  const openDemoSelector = () => {
+    setMobileOpen(false)
+    if (onDemoClick) onDemoClick()
+    else setLocalModalOpen(true)
+  }
 
   return (
     <>
+      <UserTypeModal isOpen={localModalOpen} onClose={() => setLocalModalOpen(false)} />
       {!barClosed && (
         <div style={{
           background: 'var(--eliyonix-near-black)', height: 36,
@@ -48,7 +56,7 @@ export default function Nav() {
                 <a href="#how-it-works" className="nav-link-item">How it Works</a>
                 <a href="#agents" className="nav-link-item">Agents</a>
                 <a href="#discom" className="nav-link-item">DISCOM View</a>
-                <Link to="/dashboard" className="nav-link-item">Demo</Link>
+                <button onClick={openDemoSelector} className="nav-link-item nav-link-button">Demo</button>
               </>
             ) : (
               <>
@@ -60,9 +68,15 @@ export default function Nav() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Link to="/dashboard" className="btn-primary" style={{ fontSize: 13.5, padding: '9px 22px' }}>
-              View Demo
-            </Link>
+            {isLanding ? (
+              <button onClick={openDemoSelector} className="btn-primary" style={{ fontSize: 13.5, padding: '9px 22px' }}>
+                Try Demo
+              </button>
+            ) : (
+              <button onClick={openDemoSelector} className="btn-primary" style={{ fontSize: 13.5, padding: '9px 22px' }}>
+                View Demo
+              </button>
+            )}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'none' }}
@@ -79,12 +93,14 @@ export default function Nav() {
           <Link to="/" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: 'var(--eliyonix-ink)', fontSize: 14, fontWeight: 500 }}>Home</Link>
           <Link to="/dashboard" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: 'var(--eliyonix-ink)', fontSize: 14, fontWeight: 500 }}>Dashboard</Link>
           <Link to="/agents" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: 'var(--eliyonix-ink)', fontSize: 14, fontWeight: 500 }}>Agents</Link>
+          <button onClick={openDemoSelector} style={{ textAlign: 'left', background: 'none', border: 'none', color: 'var(--eliyonix-ink)', fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", padding: 0 }}>Try Demo</button>
         </div>
       )}
 
       <style>{`
         .nav-link-item { text-decoration: none; color: var(--eliyonix-ink); font-size: 13.5px; font-weight: 500; opacity: 0.65; transition: opacity 0.2s; font-family: 'DM Sans', sans-serif; }
         .nav-link-item:hover { opacity: 1; }
+        .nav-link-button { background: none; border: none; cursor: pointer; padding: 0; }
         @media (max-width: 720px) { .desktop-links { display: none !important; } .mobile-menu-btn { display: flex !important; } }
       `}</style>
     </>

@@ -26,5 +26,6 @@ dependencies = [
     "fastapi >= 0.100.0",
     "uvicorn >= 0.20.0",
     "python-dotenv >= 1.0.0",
-    "qdrant-client >= 1.7.0"
+    "qdrant-client >= 1.7.0",
+    "paho-mqtt >= 2.1.0"
 ]

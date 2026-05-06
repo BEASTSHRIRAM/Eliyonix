@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Nav from '../components/Nav'
+import UserTypeModal from '../components/UserTypeModal'
 import { ArrowRight, Wifi, Database, Cloud, Server, ChevronRight } from 'lucide-react'
 
 const LOG_LINES = [
@@ -130,9 +131,12 @@ function AgentCard({ num, title, sub, metric, chipLabel, chipClass }) {
 }
 
 export default function LandingPage() {
+  const [showModal, setShowModal] = useState(false)
+
   return (
     <div style={{ background: 'var(--eliyonix-canvas)' }}>
-      <Nav />
+      <Nav onDemoClick={() => setShowModal(true)} />
+      <UserTypeModal isOpen={showModal} onClose={() => setShowModal(false)} />
 
       {/* ── HERO ── */}
       <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '80px 32px 80px', maxWidth: 1280, margin: '0 auto' }}>
@@ -150,9 +154,9 @@ export default function LandingPage() {
               Fault detection, load forecasting, and real-time alerts — before the village goes dark.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 52, flexWrap: 'wrap' }}>
-              <Link to="/dashboard" className="btn-primary">
+              <button onClick={() => setShowModal(true)} className="btn-primary">
                 See Live Demo <ArrowRight size={15} />
-              </Link>
+              </button>
               <a href="#how-it-works" className="btn-text-blue">How it works ↓</a>
             </div>
 
