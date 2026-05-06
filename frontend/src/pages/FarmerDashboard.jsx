@@ -1,17 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Activity, ArrowLeft, Bell, CheckCircle, ChevronRight, Phone, RefreshCw, Sun, Thermometer, Zap } from 'lucide-react'
+import { Activity, ArrowLeft, Bell, CheckCircle, ChevronRight, Phone, RefreshCw, Sun, Thermometer, Zap, MapPin, Mic } from 'lucide-react'
 import { getLiveGridState } from '../services/api'
+import VoiceAgent from '../components/VoiceAgent'
 
-const EMPTY_SENSOR = {
+const VILLAGES = [
+  { name: 'Munnar Village', id: 'KA_001' },
+  { name: 'Hassan Village', id: 'KA_002' },
+  { name: 'Kodagu Village', id: 'KA_003' },
+  { name: 'Mysore Village', id: 'KA_004' },
+  { name: 'Belgaum Village', id: 'KA_005' },
+]
+
+const EMPTY_SENSOR = (villageId) => ({
   voltage: null,
   current: null,
   temperature: null,
   ldr: null,
   power_kw: null,
-  village_id: 'KA_001',
+  village_id: villageId,
   inverter_id: 'INV_001',
-}
+})
 
 function formatValue(value, suffix = '') {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '--'
@@ -73,16 +82,21 @@ function AgentDot({ label, ok }) {
 }
 
 export default function FarmerDashboard() {
+  const [selectedVillage, setSelectedVillage] = useState('KA_001')
   const [liveState, setLiveState] = useState(null)
   const [error, setError] = useState('')
   const [now, setNow] = useState(new Date())
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const [showVoiceAgent, setShowVoiceAgent] = useState(false)
+
+  const currentVillage = VILLAGES.find(v => v.id === selectedVillage)
 
   useEffect(() => {
     let active = true
 
     async function loadLiveState() {
       try {
-        const data = await getLiveGridState('KA_001')
+        const data = await getLiveGridState(selectedVillage)
         if (!active) return
         setLiveState(data)
         setError('')
@@ -101,10 +115,10 @@ export default function FarmerDashboard() {
       clearInterval(poll)
       clearInterval(clock)
     }
-  }, [])
+  }, [selectedVillage])
 
   const latest = liveState?.latest
-  const sensor = latest?.sensor_data || EMPTY_SENSOR
+  const sensor = latest?.sensor_data || EMPTY_SENSOR(selectedVillage)
   const derived = latest?.derived || {}
   const agent = latest?.agent_result || {}
   const powerKw = sensor.power_kw ?? ((Number(sensor.voltage) * Number(sensor.current)) / 1000)
@@ -112,12 +126,12 @@ export default function FarmerDashboard() {
   const hasData = Boolean(latest)
   const isFault = Boolean(agent.fault_detected)
   const gaugeColor = isFault ? '#ff7759' : panelHealth >= 70 ? '#00b464' : '#f5a623'
-  const healthLabel = !hasData ? 'Waiting for MQTT' : isFault ? 'Needs Attention' : 'Healthy'
+  const healthLabel = !hasData ? 'Loading...' : isFault ? 'Needs Attention' : 'Healthy'
   const alerts = liveState?.alerts || []
   const logs = liveState?.logs || []
 
   const feedText = useMemo(() => {
-    if (!hasData) return 'MQTT subscriber has not published a sensor reading yet'
+    if (!hasData) return 'Waiting for sensor data from backend'
     return `Panel is generating ${formatValue(powerKw, ' kW')} from inverter ${sensor.inverter_id}`
   }, [hasData, powerKw, sensor.inverter_id])
 
@@ -126,28 +140,118 @@ export default function FarmerDashboard() {
       <header className="farmer-topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link to="/" className="farmer-back-link"><ArrowLeft size={18} /></Link>
-          <div>
-            <h1 className="font-grotesk">Munnar Village</h1>
-            <div className="font-mono-e">KA_001 · {now.toLocaleTimeString('en-GB', { hour12: true, hour: '2-digit', minute: '2-digit' })}</div>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 12px',
+                borderRadius: 8,
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+            >
+              <MapPin size={16} color="var(--eliyonix-coral)" />
+              <div style={{ textAlign: 'left' }}>
+                <h1 className="font-grotesk" style={{ margin: 0, fontSize: 16 }}>{currentVillage?.name}</h1>
+                <div className="font-mono-e" style={{ fontSize: 12, color: 'var(--eliyonix-muted)' }}>
+                  {selectedVillage} · {now.toLocaleTimeString('en-GB', { hour12: true, hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+              <ChevronRight size={14} style={{ transform: showLocationDropdown ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+            </button>
+            
+            {showLocationDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                marginTop: 8,
+                background: '#fff',
+                border: '1px solid var(--eliyonix-hairline)',
+                borderRadius: 12,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                zIndex: 50,
+                minWidth: 220,
+              }}>
+                {VILLAGES.map(village => (
+                  <button
+                    key={village.id}
+                    onClick={() => {
+                      setSelectedVillage(village.id)
+                      setShowLocationDropdown(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: selectedVillage === village.id ? 'rgba(0,180,100,0.1)' : 'transparent',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s',
+                      borderBottom: '1px solid rgba(0,0,0,0.05)',
+                      fontSize: 14,
+                      color: 'var(--eliyonix-ink)',
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = selectedVillage === village.id ? 'rgba(0,180,100,0.15)' : 'rgba(0,0,0,0.03)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = selectedVillage === village.id ? 'rgba(0,180,100,0.1)' : 'transparent'}
+                  >
+                    <div style={{ fontWeight: 500 }}>{village.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--eliyonix-muted)', marginTop: 2 }}>{village.id}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        <Link to="/enterprise-dashboard" className="farmer-switch-btn">
-          Enterprise View <ChevronRight size={14} />
-        </Link>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button
+            onClick={() => setShowVoiceAgent(true)}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: '1px solid var(--eliyonix-hairline)',
+              background: '#fff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--eliyonix-ink)',
+              fontFamily: "'DM Sans', sans-serif",
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+          >
+            <Mic size={14} /> Voice
+          </button>
+          <Link to="/enterprise-dashboard" className="farmer-switch-btn">
+            Enterprise View <ChevronRight size={14} />
+          </Link>
+        </div>
       </header>
 
       <main className="farmer-main">
         <div className="farmer-ticker">
           <Activity size={14} />
           <span>{error || feedText}</span>
-          <span className={`chip ${hasData ? 'chip-green' : 'chip-coral'}`}>{hasData ? 'MQTT LIVE' : 'WAITING'}</span>
+          <span className={`chip ${hasData ? 'chip-green' : 'chip-coral'}`}>{hasData ? 'LIVE' : 'WAITING'}</span>
         </div>
 
         <section className="card-stone farmer-health-card">
           <div>
             <div className="mono-label" style={{ color: 'var(--eliyonix-coral)', marginBottom: 10 }}>Solar Health</div>
             <h2 className="font-grotesk">{healthLabel}</h2>
-            <p>{hasData ? 'Live readings are coming from the backend MQTT publish stream.' : 'Start the MQTT subscriber or publish a sensor message to update this dashboard.'}</p>
+            <p>{hasData ? 'Live readings from sensors' : 'Waiting for sensor data from the backend'}</p>
           </div>
           <HealthGauge value={panelHealth} color={gaugeColor} />
         </section>
@@ -196,7 +300,7 @@ export default function FarmerDashboard() {
               V={formatValue(log.voltage, 'V')} I={formatValue(log.current, 'A')} T={formatValue(log.temperature, '°C')} P={formatValue(log.power_kw, ' kW')}
             </div>
           ))}
-          {!logs.length && <div className="font-mono-e">Waiting for MQTT topic village/ka_001/sensors/inv_001</div>}
+          {!logs.length && <div className="font-mono-e">No logs yet</div>}
         </section>
 
         <section className="farmer-actions">
@@ -204,6 +308,8 @@ export default function FarmerDashboard() {
           <button className="farmer-action-btn secondary"><RefreshCw size={18} /> Request Maintenance</button>
         </section>
       </main>
+
+      {showVoiceAgent && <VoiceAgent villageId={selectedVillage} onClose={() => setShowVoiceAgent(false)} />}
     </div>
   )
 }

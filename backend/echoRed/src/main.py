@@ -17,6 +17,7 @@ from .recommendation_scheduler import get_scheduler, create_scheduler
 from .agents.recommendation_agent import RecommendationAgent
 from .recommendation_engine import get_recommendation_engine
 from .live_state import get_live_state, update_live_state
+from .voice_agent import handle_voice_agent_request
 
 load_dotenv(override=True)
 
@@ -458,6 +459,20 @@ async def get_ai_recommendations(request):
             'recommendations': []
         }, status_code=500)
 
+
+async def voice_agent_handler(request):
+    """Handle voice agent requests with LLM, weather, and recommendations"""
+    try:
+        body = await request.json()
+        result = await handle_voice_agent_request(body)
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error(f"Error in voice agent handler: {e}", exc_info=True)
+        return JSONResponse({
+            'error': str(e),
+            'response': 'Sorry, I encountered an error. Please try again.'
+        }, status_code=500)
+
 app.add_route("/health", http_health, methods=["GET"])
 app.add_route("/agent/status", agent_status, methods=["GET"])
 app.add_route("/invoke", http_invoke, methods=["POST"])
@@ -471,6 +486,7 @@ app.add_route("/recommendations/history", get_recommendation_history, methods=["
 app.add_route("/recommendations/trigger", trigger_recommendations, methods=["POST"])
 app.add_route("/vector-store/status", get_vector_store_status, methods=["GET"])
 app.add_route("/scheduler/status", scheduler_status_endpoint, methods=["GET"])
+app.add_route("/api/voice-agent", voice_agent_handler, methods=["POST"])
 
 
 # Recommendation generation callback for scheduler

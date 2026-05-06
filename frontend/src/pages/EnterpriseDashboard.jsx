@@ -108,7 +108,7 @@ export default function EnterpriseDashboard() {
         }}>
           <h1 className="font-grotesk" style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.4px', color: 'var(--eliyonix-ink)' }}>Enterprise Grid Overview</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <span className={`chip ${hasData ? 'chip-green' : 'chip-coral'}`}>{hasData ? 'MQTT LIVE' : 'WAITING FOR MQTT'}</span>
+            <span className={`chip ${hasData ? 'chip-green' : 'chip-coral'}`}>{hasData ? 'LIVE' : 'WAITING'}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', border: '1px solid var(--eliyonix-hairline)', borderRadius: 8, background: '#fff' }}>
               <span style={{ fontSize: 13, color: 'var(--eliyonix-ink)' }}>Village: {sensor.village_id || 'KA_001'}</span>
               <ChevronDown size={13} color="var(--eliyonix-muted)" />
@@ -142,7 +142,7 @@ export default function EnterpriseDashboard() {
                   ))}
                   {!logs.length && (
                     <div className="font-mono-e" style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
-                      Waiting for MQTT topic village/ka_001/sensors/inv_001
+                      Waiting for sensor data from backend
                     </div>
                   )}
                 </div>

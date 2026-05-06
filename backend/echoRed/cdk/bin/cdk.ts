@@ -7,8 +7,20 @@ import {
 } from '../lib/stacks';
 
 const app = new cdk.App();
+const account =
+  process.env.CDK_DEPLOY_ACCOUNT ??
+  process.env.CDK_DEFAULT_ACCOUNT ??
+  process.env.AWS_ACCOUNT_ID;
+const region =
+  process.env.CDK_DEPLOY_REGION ??
+  process.env.CDK_DEFAULT_REGION ??
+  process.env.AWS_REGION ??
+  process.env.AWS_DEFAULT_REGION;
+
 const deploymentProps: BaseStackProps = {
   appName: "echoRed",
+  // Only pin the stack environment when both values are available.
+  env: account && region ? { account, region } : undefined,
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

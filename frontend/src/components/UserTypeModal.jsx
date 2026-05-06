@@ -27,20 +27,20 @@ export default function UserTypeModal({ isOpen, onClose }) {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="mono-label" style={{ color: 'var(--eliyonix-coral)', marginBottom: 14, fontSize: 11 }}>
+          <div className="mono-label" style={{ color: '#ff7759', marginBottom: 14, fontSize: 11 }}>
             Choose Your Experience
           </div>
           <h2 className="font-grotesk" style={{
             fontSize: 'clamp(28px, 4vw, 42px)',
             fontWeight: 400,
-            color: '#fff',
+            color: '#000',
             letterSpacing: '-1px',
             lineHeight: 1.1,
             marginBottom: 12,
           }}>
             How will you use<br />Eliyonix?
           </h2>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', maxWidth: 400, margin: '0 auto', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 15, color: 'rgba(0,0,0,0.6)', maxWidth: 400, margin: '0 auto', lineHeight: 1.6 }}>
             We'll tailor the dashboard experience to match your needs
           </p>
         </div>
@@ -69,10 +69,10 @@ export default function UserTypeModal({ isOpen, onClose }) {
               Monitor your solar panel health with simple visual alerts. No technical jargon — just clear status updates.
             </p>
             <ul className="user-type-card-features">
-              <li>☀️ Panel health at a glance</li>
-              <li>🔔 Simple alert notifications</li>
-              <li>📱 Mobile-friendly design</li>
-              <li>🌾 Made for village use</li>
+              <li>Panel health at a glance</li>
+              <li>Simple alert notifications</li>
+              <li>Mobile-friendly design</li>
+              <li>Made for village use</li>
             </ul>
             <div className="user-type-card-cta">
               <span>Enter as Farmer</span>
@@ -102,10 +102,10 @@ export default function UserTypeModal({ isOpen, onClose }) {
               Fleet-level analytics, multi-site monitoring, AI recommendations, and exportable reports.
             </p>
             <ul className="user-type-card-features">
-              <li>📊 Multi-site fleet monitoring</li>
-              <li>🤖 AI-powered recommendations</li>
-              <li>⚡ Real-time agent decisions</li>
-              <li>📋 DISCOM grid visibility</li>
+              <li>Multi-site fleet monitoring</li>
+              <li>AI-powered recommendations</li>
+              <li>Real-time agent decisions</li>
+              <li>DISCOM grid visibility</li>
             </ul>
             <div className="user-type-card-cta enterprise-cta">
               <span>Enter as Enterprise</span>
@@ -116,7 +116,7 @@ export default function UserTypeModal({ isOpen, onClose }) {
 
         {/* Footer hint */}
         <div style={{ textAlign: 'center', marginTop: 36 }}>
-          <span className="font-mono-e" style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.3px' }}>
+          <span className="font-mono-e" style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', letterSpacing: '0.3px' }}>
             You can switch anytime from the dashboard
           </span>
         </div>
