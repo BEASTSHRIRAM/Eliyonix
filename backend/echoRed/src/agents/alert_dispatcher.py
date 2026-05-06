@@ -108,43 +108,29 @@ class AlertDispatcher:
     
     async def _generate_alert(self, state: GridState) -> str:
         """Generate alert message in appropriate language"""
-        alert_generator = get_alert_generator()
-        
         sensor_data = state["sensor_data"]
         fault_type = state.get("fault_type", "inverter_fault")
         village_id = sensor_data.get("village_id", "unknown")
         inverter_id = sensor_data.get("inverter_id", "unknown")
         confidence = state["anomaly_score"]
         
-        # Determine language (simplified: use Kannada for now)
-        language = state.get("alert_language", "kannada")
+        # Generate clear English alert message
+        fault_descriptions = {
+            "inverter_overvoltage": "Overvoltage detected",
+            "inverter_undervoltage": "Undervoltage detected",
+            "inverter_overtemp": "Overheating detected",
+            "inverter_undertemp": "Low temperature detected",
+            "inverter_overcurrent": "Overcurrent detected",
+            "inverter_fault": "Fault detected",
+        }
         
-        try:
-            if language == "kannada":
-                alert_message = await alert_generator.generate_alert_kannada(
-                    fault_type=fault_type,
-                    village_id=village_id,
-                    confidence=confidence,
-                    inverter_id=inverter_id,
-                    sensor_data=sensor_data,
-                )
-            elif language == "hindi":
-                alert_message = await alert_generator.generate_alert_hindi(
-                    fault_type=fault_type,
-                    village_id=village_id,
-                    confidence=confidence,
-                    inverter_id=inverter_id,
-                    sensor_data=sensor_data,
-                )
-            else:
-                alert_message = f"Alert: {fault_type.replace('_', ' ')} in {village_id}"
-            
-            logger.info(f"Generated alert in {language}: {alert_message}")
-            return alert_message
-            
-        except Exception as e:
-            logger.error(f"Error generating alert: {e}")
-            return f"Alert: {fault_type} in {village_id}"
+        fault_desc = fault_descriptions.get(fault_type, fault_type.replace("_", " ").title())
+        
+        # Format alert message
+        alert_message = f"ALERT: {fault_desc} in {village_id} (Inverter: {inverter_id}). Confidence: {confidence*100:.0f}%. Voltage: {sensor_data.get('voltage', 0):.1f}V, Current: {sensor_data.get('current', 0):.1f}A, Temp: {sensor_data.get('temperature', 0):.1f}°C"
+        
+        logger.info(f"Generated alert: {alert_message}")
+        return alert_message
 
 
 async def alert_dispatcher_node(state: GridState) -> GridState:

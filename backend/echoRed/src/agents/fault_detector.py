@@ -33,6 +33,41 @@ class FaultDetector:
             n_estimators=100,
         )
         self.memory: Dict[str, Any] = {}
+        self.is_trained = False
+        self._train_with_default_data()
+    
+    def _train_with_default_data(self):
+        """Train the model with default normal sensor data"""
+        # Generate synthetic normal data for training
+        # Normal voltage range: 410-420V
+        # Normal current range: 5-12A
+        # Normal temperature range: 20-40°C
+        normal_data = np.array([
+            [415, 8, 30],  # Normal conditions
+            [414, 7.5, 28],
+            [416, 8.5, 32],
+            [413, 7, 25],
+            [418, 9, 35],
+            [412, 6.5, 22],
+            [417, 8.2, 31],
+            [415.5, 7.8, 29],
+            [414.5, 8.3, 33],
+            [416.5, 7.2, 27],
+            [413.5, 8.7, 34],
+            [418.5, 6.8, 24],
+            [415.2, 8.1, 30],
+            [414.8, 7.9, 29],
+            [416.2, 8.4, 32],
+            [412.5, 7.1, 26],
+            [417.5, 8.8, 36],
+            [415.8, 7.3, 28],
+            [413.2, 8.9, 38],
+            [418.2, 6.9, 23],
+        ])
+        
+        self.isolation_forest.fit(normal_data)
+        self.is_trained = True
+        logger.info("FaultDetector trained with default normal sensor data")
     
     async def initialize(self):
         """Initialize agent memory"""
@@ -96,12 +131,15 @@ class FaultDetector:
     def _normalize_score(self, raw_score: float) -> float:
         """
         Normalize Isolation Forest score to 0-1 range
-        Raw scores are negative; more negative = more anomalous
+        Raw scores: -1 = anomaly, 0 = normal
+        Convert so 0 = normal, 1 = anomaly
         """
-        # Approximate transformation: raw scores typically range from -0.1 to 0.1
-        # Map to 0-1 with 0 being normal, 1 being highly anomalous
-        normalized = max(0, min(1, 1 - (raw_score + 0.1)))
-        return normalized
+        # IsolationForest returns anomaly scores: -1 is anomaly, 0+ is normal
+        # If raw_score < -0.5, it's likely anomalous
+        if raw_score < -0.5:
+            return min(1.0, abs(raw_score) * 2)  # Scale anomaly scores
+        else:
+            return 0.0  # Normal data returns 0
     
     def _classify_fault(self, sensor_data: SensorData, anomaly_score: float) -> str:
         """Classify the type of fault based on sensor readings"""
