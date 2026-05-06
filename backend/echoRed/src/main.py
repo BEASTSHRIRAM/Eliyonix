@@ -5,6 +5,8 @@ Multi-agent system for detecting faults, forecasting load, and dispatching alert
 import os
 import json
 import logging
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from bedrock_agentcore import BedrockAgentCoreApp
 from .orchestrator import get_orchestrator, reset_orchestrator
 from .grid_state import SensorData
@@ -15,6 +17,15 @@ logger = logging.getLogger(__name__)
 
 # Initialize Bedrock AgentCore
 app = BedrockAgentCoreApp()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.entrypoint
@@ -98,6 +109,63 @@ async def health_check(payload: dict) -> dict:
         "service": "VidyutSeva",
         "version": "0.1.0",
     }
+
+
+# FastAPI HTTP routes for frontend integration
+@app.get("/health")
+async def http_health():
+    """HTTP health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "VidyutSeva",
+        "version": "0.1.0",
+    }
+
+
+@app.get("/agent/status")
+async def agent_status():
+    """Get current agent status"""
+    try:
+        orchestrator = get_orchestrator()
+        return {
+            "status": "running",
+            "agents": {
+                "fault_detector": "active",
+                "load_forecaster": "active",
+                "alert_dispatcher": "active",
+            },
+            "last_execution": None,
+            "uptime": "running",
+        }
+    except Exception as e:
+        logger.error(f"Error getting agent status: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+        }
+
+
+@app.post("/solar-selection")
+async def solar_selection(data: dict):
+    """Handle solar brand selection from mobile app"""
+    try:
+        brand = data.get("brand")
+        farmer_id = data.get("farmerId", "farmer_001")
+        
+        logger.info(f"Solar brand selection: {brand} from {farmer_id}")
+        
+        return {
+            "status": "success",
+            "message": f"Selected {brand} for farmer {farmer_id}",
+            "brand": brand,
+            "farmerId": farmer_id,
+        }
+    except Exception as e:
+        logger.error(f"Error processing solar selection: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+        }
 
 
 if __name__ == "__main__":

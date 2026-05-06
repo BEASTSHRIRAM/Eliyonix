@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import { ChevronDown, Play, Download, Map } from 'lucide-react'
+import { sendSensorData, healthCheck } from '../services/api'
 
 const BASE_SENSORS = { v: 415.2, i: 8.21, t: 31.8, ldr: 812 }
 const FAULT_SENSORS = { v: 380.0, i: 12.5,  t: 68.4, ldr: 720 }
+let backendResponse = null
+let backendHealthy = false
 
 function rand(base, pct) { return (base * (1 + (Math.random() - 0.5) * pct)).toFixed(base < 10 ? 2 : 1) }
 
@@ -91,6 +94,28 @@ export default function Dashboard() {
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = 0
   }, [logs])
+
+  // Check backend health and send sensor data
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const isHealthy = await healthCheck()
+        backendHealthy = isHealthy
+        if (isHealthy) {
+          console.log('✅ VidyutSeva backend is healthy')
+          // Send current sensor data
+          const response = await sendSensorData(sensorVals)
+          backendResponse = response
+          console.log('📊 Backend response:', response)
+        } else {
+          console.log('⚠️ VidyutSeva backend is not responding')
+        }
+      } catch (error) {
+        console.log('❌ Backend error:', error.message)
+      }
+    }
+    checkBackend()
+  }, [])
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f8f8' }}>

@@ -1,0 +1,176 @@
+import './SolarBrandSelector.css';
+
+.solar-container {
+  padding: 1rem;
+  background: linear-gradient(135deg, #edfce9 0%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+.header-card {
+  background: linear-gradient(135deg, #003c33 0%, #1a564d 100%);
+  color: white;
+  border: none;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 60, 51, 0.2);
+}
+
+.header-card h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.header-card .subtitle {
+  font-size: 1rem;
+  color: #edfce9;
+  margin: 0.5rem 0;
+  font-weight: 500;
+}
+
+.header-card .description {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 1rem 0 0 0;
+  line-height: 1.5;
+}
+
+.selector-card {
+  background: white;
+  border: 2px solid #003c33;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 60, 51, 0.15);
+}
+
+.selector-card ion-card-header {
+  border-bottom: 2px solid #edfce9;
+}
+
+.selector-card ion-card-title {
+  color: #003c33;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.brand-select {
+  --padding-start: 1rem;
+  --padding-end: 1rem;
+  border: 1px solid #edfce9;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #f9f9f9;
+  color: #003c33;
+  font-weight: 500;
+}
+
+.brand-select:focus {
+  border-color: #003c33;
+  background: white;
+}
+
+.brand-details-card {
+  background: white;
+  border: 2px solid #edfce9;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 60, 51, 0.1);
+}
+
+.brand-details-card ion-card-header {
+  border-bottom: 2px solid #edfce9;
+  background: linear-gradient(90deg, #edfce9 0%, #f9f9f9 100%);
+}
+
+.brand-details-card ion-card-title {
+  color: #003c33;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.detail-item {
+  text-align: center;
+  padding: 1rem;
+}
+
+.detail-item h3 {
+  color: #003c33;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-item p {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.detail-item .detail-value {
+  color: #003c33;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.detail-item .hindi-text {
+  font-size: 1.2rem;
+  color: #003c33;
+  font-weight: 600;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 0 1rem;
+}
+
+.button-group .confirm-button {
+  --background: #003c33;
+  --background-hover: #00342b;
+  --color: white;
+  --border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(0, 60, 51, 0.3);
+}
+
+.button-group .confirm-button:disabled {
+  --background: #ccc;
+  opacity: 0.5;
+}
+
+.button-group .reset-button {
+  --color: #003c33;
+  --border-color: #003c33;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+ion-loading {
+  --background: rgba(0, 60, 51, 0.9);
+  --spinner-color: #edfce9;
+}
+
+ion-alert {
+  --background: white;
+  --text-color: #003c33;
+}
+
+@media (max-width: 480px) {
+  .header-card h1 {
+    font-size: 1.5rem;
+  }
+
+  .detail-item {
+    padding: 0.75rem;
+  }
+
+  .button-group {
+    padding: 0;
+  }
+}

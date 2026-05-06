@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import { ArrowRight } from 'lucide-react'
+import { getAgentStatus } from '../services/api'
 
 const FAULT_LOGS = [
   '[14:32:01] Input: V=415V I=8.2A T=32°C',
@@ -51,10 +52,27 @@ function MetricRow({ items }) {
 
 export default function AgentMonitor() {
   const [time, setTime] = useState(new Date().toLocaleTimeString('en-GB', { hour12: false }))
+  const [agentStatus, setAgentStatus] = useState(null)
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date().toLocaleTimeString('en-GB', { hour12: false })), 1000)
     return () => clearInterval(t)
+  }, [])
+
+  // Load agent status from backend
+  useEffect(() => {
+    const loadAgentStatus = async () => {
+      try {
+        const status = await getAgentStatus()
+        setAgentStatus(status)
+        console.log('📊 Agent status:', status)
+      } catch (error) {
+        console.log('⚠️ Could not load agent status:', error.message)
+      }
+    }
+    loadAgentStatus()
+    const interval = setInterval(loadAgentStatus, 5000) // Refresh every 5 seconds
+    return () => clearInterval(interval)
   }, [])
 
   return (
