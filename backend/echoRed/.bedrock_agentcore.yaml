@@ -1,0 +1,16 @@
+default_agent: echoRed_Agent
+is_agentcore_create_with_iac: true
+agents:
+  echoRed_Agent:
+    name: echoRed_Agent
+    entrypoint: /workspaces/Eliyonix/backend/echoRed/src/main.py
+    deployment_type: container
+    source_path: /workspaces/Eliyonix/backend/echoRed/src
+    aws:
+      account: null
+      region: null
+    bedrock_agentcore:
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    is_generated_by_agentcore_create: true
