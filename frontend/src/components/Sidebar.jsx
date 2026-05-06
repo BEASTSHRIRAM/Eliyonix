@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Bot, Radio, Bell, Building2, Wifi, Cpu } from 'lucide-react'
+import { LayoutDashboard, Bot, Radio, Bell, Building2, Wifi, Cpu, Lightbulb } from 'lucide-react'
 import LogoIcon from './LogoIcon'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Overview',    path: '/dashboard' },
   { icon: Bot,             label: 'Agents',      path: '/agents' },
+  { icon: Lightbulb,       label: 'Recommendations', path: '/recommendations' },
   { icon: Radio,           label: 'Sensor Feed', path: '/dashboard' },
   { icon: Bell,            label: 'Alerts',      path: '/dashboard' },
   { icon: Building2,       label: 'DISCOM View', path: '/dashboard' },
@@ -54,7 +55,7 @@ export default function Sidebar() {
         ))}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="pulse-dot" style={{ background: '#00b464' }} />
-          <span className="font-mono-e" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.5)' }}>3 agents active</span>
+          <span className="font-mono-e" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.5)' }}>4 agents active</span>
         </div>
       </div>
     </aside>

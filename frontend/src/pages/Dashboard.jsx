@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
-import { ChevronDown, Play, Download, Map } from 'lucide-react'
+import RecommendationCard from '../components/RecommendationCard'
+import RecommendationHistory from '../components/RecommendationHistory'
+import RecommendationModal from '../components/RecommendationModal'
+import { ChevronDown, Play, Download, Map, Lightbulb, Clock } from 'lucide-react'
 import { sendSensorData, healthCheck } from '../services/api'
 
 const BASE_SENSORS = { v: 415.2, i: 8.21, t: 31.8, ldr: 812 }
@@ -16,11 +19,44 @@ function generateLog(sensors) {
   return `[${ts}] V=${sensors.v}V  I=${sensors.i}A  T=${sensors.t}°C  LDR=${sensors.ldr}`
 }
 
-function StatCard({ label, value, sub, subColor, mono, accentColor }) {
+function StatCard({ label, value, sub, subColor, mono, accentColor, onRecommendation }) {
   return (
     <div className="card-stone" style={{ padding: '24px 22px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: accentColor || 'var(--eliyonix-hairline)', borderRadius: '12px 0 0 12px' }} />
-      <div className="mono-label" style={{ color: 'var(--eliyonix-muted)', marginBottom: 12, fontSize: 10 }}>{label}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <div className="mono-label" style={{ color: 'var(--eliyonix-muted)', fontSize: 10 }}>{label}</div>
+        {onRecommendation && (
+          <button
+            onClick={onRecommendation}
+            style={{
+              background: 'none',
+              border: '1px solid var(--eliyonix-muted)',
+              cursor: 'pointer',
+              padding: '4px 12px',
+              color: 'var(--eliyonix-muted)',
+              fontSize: '11px',
+              fontWeight: 500,
+              borderRadius: '4px',
+              transition: 'all 0.2s ease',
+              textTransform: 'uppercase',
+              letterSpacing: '0.4px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = accentColor || 'var(--eliyonix-ink)'
+              e.currentTarget.style.borderColor = accentColor || 'var(--eliyonix-ink)'
+              e.currentTarget.style.backgroundColor = 'rgba(24, 99, 220, 0.05)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--eliyonix-muted)'
+              e.currentTarget.style.borderColor = 'var(--eliyonix-muted)'
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+            title="Get recommendation"
+          >
+            Recommendation
+          </button>
+        )}
+      </div>
       <div className="font-grotesk stat-value" style={{ fontSize: 38, fontWeight: 400, color: 'var(--eliyonix-ink)', letterSpacing: '-1px', lineHeight: 1, marginBottom: 8 }}>{value}</div>
       <div style={{ fontSize: 13, color: subColor || 'var(--eliyonix-muted)', marginBottom: 8 }}>{sub}</div>
       <div className="font-mono-e" style={{ fontSize: 10, color: 'var(--eliyonix-muted)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>{mono}</div>
@@ -53,6 +89,14 @@ export default function Dashboard() {
   const [scenario, setScenario] = useState('normal')
   const [logs, setLogs] = useState([])
   const [sensorVals, setSensorVals] = useState(BASE_SENSORS)
+  const [recommendations, setRecommendations] = useState({})
+  const [schedulerStatus, setSchedulerStatus] = useState(null)
+  const [showRecommendationHistory, setShowRecommendationHistory] = useState(false)
+  const [countdownMinutes, setCountdownMinutes] = useState(60)
+  const [showRecommendationModal, setShowRecommendationModal] = useState(false)
+  const [selectedComponent, setSelectedComponent] = useState(null)
+  const [modalLoading, setModalLoading] = useState(false)
+  const [modalRecommendation, setModalRecommendation] = useState(null)
   const logRef = useRef(null)
 
   const isFault = scenario === 'fault'
@@ -117,6 +161,64 @@ export default function Dashboard() {
     checkBackend()
   }, [])
 
+  // Fetch recommendations
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const response = await fetch('/recommendations')
+        const data = await response.json()
+        setRecommendations(data.recommendations || {})
+        setSchedulerStatus(data.scheduler_status || {})
+        
+        // Update countdown
+        if (data.scheduler_status?.time_until_next_minutes) {
+          setCountdownMinutes(data.scheduler_status.time_until_next_minutes)
+        }
+      } catch (error) {
+        console.error('Error fetching recommendations:', error)
+      }
+    }
+
+    fetchRecommendations()
+    const interval = setInterval(fetchRecommendations, 30000) // Fetch every 30 seconds
+    return () => clearInterval(interval)
+  }, [])
+
+  // Countdown timer
+  useEffect(() => {
+    if (countdownMinutes <= 0) return
+    const interval = setInterval(() => {
+      setCountdownMinutes(prev => Math.max(0, prev - 1))
+    }, 60000) // Decrement every minute
+    return () => clearInterval(interval)
+  }, [countdownMinutes])
+
+  // Fetch recommendation for specific component
+  const fetchComponentRecommendation = async (component) => {
+    setSelectedComponent(component)
+    setShowRecommendationModal(true)
+    setModalLoading(true)
+    try {
+      const response = await fetch(`/recommendations/${component}`)
+      const data = await response.json()
+      if (data.recommendation) {
+        setModalRecommendation(data.recommendation)
+      }
+    } catch (error) {
+      console.error('Error fetching recommendation:', error)
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  // Component labels
+  const componentLabels = {
+    solar: { label: '🌞 Solar Output', icon: '🌞' },
+    fault: { label: '⚠️ Fault Score', icon: '⚠️' },
+    forecast: { label: '📈 Load Forecast', icon: '📈' },
+    alerts: { label: '🔔 Active Alerts', icon: '🔔' }
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f8f8' }}>
       <Sidebar />
@@ -130,6 +232,33 @@ export default function Dashboard() {
         }}>
           <h1 className="font-grotesk" style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.4px', color: 'var(--eliyonix-ink)' }}>Grid Overview</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Countdown Timer */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f8f8fa', borderRadius: '8px', fontSize: '12px', color: '#7e7e8f' }}>
+              <Clock size={14} />
+              Next recommendation in: <strong>{countdownMinutes}</strong> min
+            </div>
+
+            {/* History Button */}
+            <button
+              onClick={() => setShowRecommendationHistory(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '7px 14px', border: '1px solid var(--eliyonix-hairline)',
+                borderRadius: '8px', background: '#fff', cursor: 'pointer',
+                fontSize: '13px', color: 'var(--eliyonix-ink)', transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#f8f8fa'
+                e.currentTarget.style.borderColor = '#d0d0d5'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff'
+                e.currentTarget.style.borderColor = 'var(--eliyonix-hairline)'
+              }}
+            >
+              <Clock size={12} /> History
+            </button>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', border: '1px solid var(--eliyonix-hairline)', borderRadius: 8, background: '#fff', cursor: 'pointer' }}>
               <span style={{ fontSize: 13, color: 'var(--eliyonix-ink)' }}>Village: KA_001 — Munnar</span>
               <ChevronDown size={13} color="var(--eliyonix-muted)" />
@@ -147,17 +276,41 @@ export default function Dashboard() {
 
           {/* Stat cards */}
           <div className="four-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
-            <StatCard label="Solar Output" value={solarOutput}
-              sub={isFault ? '↓ 47% — fault active' : '↑ 12% vs yesterday'} subColor={isFault ? '#ff7759' : '#00b464'}
-              mono="Panel Efficiency: 87%" accentColor="#00b464" />
-            <StatCard label="Fault Score" value={faultScore}
-              sub={faultStatus} subColor={isFault ? '#ff7759' : '#00b464'}
-              mono="Isolation Forest · Live" accentColor={faultAccent} />
-            <StatCard label="Load Forecast" value="3.8 kW"
-              sub="Peak expected at 16:00" mono="LSTM · Next 2 Hours" accentColor="#1863dc" />
-            <StatCard label="Active Alerts" value={activeAlerts}
-              sub={isFault ? 'Inverter stress — act now' : 'All systems nominal'} subColor={isFault ? '#ff7759' : 'var(--eliyonix-muted)'}
-              mono="Alert Dispatcher · Standby" accentColor={isFault ? '#ff7759' : '#93939f'} />
+            <StatCard
+              label="Solar Output"
+              value={solarOutput}
+              sub={isFault ? '↓ 47% — fault active' : '↑ 12% vs yesterday'}
+              subColor={isFault ? '#ff7759' : '#00b464'}
+              mono="Panel Efficiency: 87%"
+              accentColor="#00b464"
+              onRecommendation={() => fetchComponentRecommendation('solar')}
+            />
+            <StatCard
+              label="Fault Score"
+              value={faultScore}
+              sub={faultStatus}
+              subColor={isFault ? '#ff7759' : '#00b464'}
+              mono="Isolation Forest · Live"
+              accentColor={faultAccent}
+              onRecommendation={() => fetchComponentRecommendation('fault')}
+            />
+            <StatCard
+              label="Load Forecast"
+              value="3.8 kW"
+              sub="Peak expected at 16:00"
+              mono="LSTM · Next 2 Hours"
+              accentColor="#1863dc"
+              onRecommendation={() => fetchComponentRecommendation('forecast')}
+            />
+            <StatCard
+              label="Active Alerts"
+              value={activeAlerts}
+              sub={isFault ? 'Inverter stress — act now' : 'All systems nominal'}
+              subColor={isFault ? '#ff7759' : 'var(--eliyonix-muted)'}
+              mono="Alert Dispatcher · Standby"
+              accentColor={isFault ? '#ff7759' : '#93939f'}
+              onRecommendation={() => fetchComponentRecommendation('alerts')}
+            />
           </div>
 
           {/* Live feed + Agent decisions */}
@@ -209,6 +362,80 @@ export default function Dashboard() {
                 metricLine={alertBody}
                 footerLine={isFault ? 'Sent via Twilio WhatsApp · Just now' : 'Last alert: 2 days ago'}
                 accent={alertAccent}
+              />
+            </div>
+          </div>
+
+          {/* Scenario Simulator */}
+          <div className="card-stone" style={{ padding: '28px 28px' }}>
+            <div style={{ marginBottom: 18 }}>
+              <div className="font-grotesk" style={{ fontSize: 18, color: 'var(--eliyonix-ink)', letterSpacing: '-0.3px', marginBottom: 6 }}>Recommendations</div>
+              <div style={{ fontSize: 13.5, color: 'var(--eliyonix-muted)' }}>AI-powered insights for each dashboard component</div>
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '16px'
+            }}>
+              <RecommendationCard
+                component="solar"
+                componentLabel="🌞 Solar Output"
+                icon="🌞"
+                timestamp={recommendations.solar?.timestamp || new Date().toISOString()}
+                text={recommendations.solar?.text || 'Panel efficiency monitoring...'}
+                confidence={recommendations.solar?.confidence || 0.8}
+                status={recommendations.solar?.status || 'MONITOR'}
+                retrievedCount={recommendations.solar?.retrieved_count || 0}
+              />
+              <RecommendationCard
+                component="fault"
+                componentLabel="⚠️ Fault Score"
+                icon="⚠️"
+                timestamp={recommendations.fault?.timestamp || new Date().toISOString()}
+                text={recommendations.fault?.text || 'Analyzing inverter health...'}
+                confidence={recommendations.fault?.confidence || 0.85}
+                status={recommendations.fault?.status || 'OPTIMAL'}
+                retrievedCount={recommendations.fault?.retrieved_count || 0}
+              />
+              <RecommendationCard
+                component="forecast"
+                componentLabel="📈 Load Forecast"
+                icon="📈"
+                timestamp={recommendations.forecast?.timestamp || new Date().toISOString()}
+                text={recommendations.forecast?.text || 'Predicting demand patterns...'}
+                confidence={recommendations.forecast?.confidence || 0.75}
+                status={recommendations.forecast?.status || 'MONITOR'}
+                retrievedCount={recommendations.forecast?.retrieved_count || 0}
+              />
+              <RecommendationCard
+                component="alerts"
+                componentLabel="🔔 Active Alerts"
+                icon="🔔"
+                timestamp={recommendations.alerts?.timestamp || new Date().toISOString()}
+                text={recommendations.alerts?.text || 'No active alerts detected'}
+                confidence={recommendations.alerts?.confidence || 0.9}
+                status={recommendations.alerts?.status || 'OPTIMAL'}
+                retrievedCount={recommendations.alerts?.retrieved_count || 0}
+              />
+              <RecommendationCard
+                component="sensor"
+                componentLabel="📡 Live Sensor Feed"
+                icon="📡"
+                timestamp={recommendations.sensor?.timestamp || new Date().toISOString()}
+                text={recommendations.sensor?.text || 'Sensor readings nominal'}
+                confidence={recommendations.sensor?.confidence || 0.88}
+                status={recommendations.sensor?.status || 'OPTIMAL'}
+                retrievedCount={recommendations.sensor?.retrieved_count || 0}
+              />
+              <RecommendationCard
+                component="agents"
+                componentLabel="🤖 Agent Decisions"
+                icon="🤖"
+                timestamp={recommendations.agents?.timestamp || new Date().toISOString()}
+                text={recommendations.agents?.text || 'All agents operating normally'}
+                confidence={recommendations.agents?.confidence || 0.92}
+                status={recommendations.agents?.status || 'OPTIMAL'}
+                retrievedCount={recommendations.agents?.retrieved_count || 0}
               />
             </div>
           </div>
@@ -296,6 +523,23 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      {/* Recommendation History Drawer */}
+      <RecommendationHistory
+        isOpen={showRecommendationHistory}
+        onClose={() => setShowRecommendationHistory(false)}
+      />
+
+      {/* Recommendation Modal */}
+      <RecommendationModal
+        isOpen={showRecommendationModal}
+        onClose={() => setShowRecommendationModal(false)}
+        component={selectedComponent}
+        componentLabel={selectedComponent ? componentLabels[selectedComponent]?.label : ''}
+        icon={selectedComponent ? componentLabels[selectedComponent]?.icon : '💡'}
+        loading={modalLoading}
+        recommendation={modalRecommendation}
+      />
     </div>
   )
 }

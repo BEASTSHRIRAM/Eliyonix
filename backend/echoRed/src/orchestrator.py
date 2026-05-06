@@ -12,6 +12,7 @@ from .agents import (
     fault_detector_node,
     load_forecaster_node,
     alert_dispatcher_node,
+    recommendation_agent_node,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,11 +33,13 @@ class VidyutSevaOrchestrator:
         graph.add_node("fault_detector", fault_detector_node)
         graph.add_node("load_forecaster", load_forecaster_node)
         graph.add_node("alert_dispatcher", alert_dispatcher_node)
+        graph.add_node("recommendation_agent", recommendation_agent_node)
         
         # Add edges
         graph.add_edge("fault_detector", "load_forecaster")
         graph.add_edge("load_forecaster", "alert_dispatcher")
-        graph.add_edge("alert_dispatcher", END)
+        graph.add_edge("alert_dispatcher", "recommendation_agent")
+        graph.add_edge("recommendation_agent", END)
         
         # Set entry point
         graph.set_entry_point("fault_detector")

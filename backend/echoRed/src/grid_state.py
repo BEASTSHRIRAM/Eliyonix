@@ -55,6 +55,16 @@ class AlertRecord(TypedDict):
     technician_response: Optional[str]
 
 
+class RecommendationRecord(TypedDict):
+    """Recommendation record for a component"""
+    timestamp: float
+    component: str  # "solar", "fault", "forecast", "alerts", "sensor", "agents"
+    text: str
+    confidence: float  # 0-1
+    status: str  # "ACTION_REQUIRED", "MONITOR", "OPTIMAL"
+    retrieved_event_count: int
+
+
 class A2AMessage(TypedDict):
     """Agent-to-Agent message format"""
     message_id: str
@@ -92,6 +102,10 @@ class GridState(TypedDict):
     alert_language: str  # "kannada", "hindi", "english"
     alert_dispatcher_memory: Optional[Dict[str, Any]]
     
+    # Recommendation Agent outputs
+    recommendations: Optional[Dict[str, Dict[str, Any]]]  # component -> recommendation
+    recommendation_memory: Optional[Dict[str, Any]]
+    
     # Metadata
     execution_id: str
     timestamp: float
@@ -127,6 +141,8 @@ def create_empty_grid_state(sensor_data: SensorData, execution_id: str) -> GridS
         "alert_message": None,
         "alert_language": "kannada",
         "alert_dispatcher_memory": None,
+        "recommendations": None,
+        "recommendation_memory": None,
         "execution_id": execution_id,
         "timestamp": datetime.now().timestamp(),
         "errors": [],
