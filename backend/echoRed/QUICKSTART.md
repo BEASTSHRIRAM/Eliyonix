@@ -253,6 +253,15 @@ export COGNITO_TOKEN_URL=your_cognito_token_url
 export COGNITO_CLIENT_ID=your_cognito_client_id
 export COGNITO_CLIENT_SECRET=your_cognito_client_secret
 export COGNITO_SCOPE=your_gateway_scope
+
+# SMTP farmer alerts instead of Telegram
+export ALERT_CHANNEL=smtp
+export SMTP_HOST=smtp.gmail.com
+export SMTP_PORT=587
+export SMTP_USERNAME=your_email@gmail.com
+export SMTP_PASSWORD=your_app_password
+export SMTP_FROM_EMAIL=your_email@gmail.com
+export FARMER_EMAIL_KA_001=farmer_email@example.com
 ```
 
 ### Customization

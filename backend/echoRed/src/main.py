@@ -5,6 +5,7 @@ Multi-agent system for detecting faults, forecasting load, and dispatching alert
 import os
 import json
 import logging
+from dotenv import load_dotenv
 from starlette.routing import Route, Mount
 from starlette.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -16,6 +17,8 @@ from .recommendation_scheduler import get_scheduler, create_scheduler
 from .agents.recommendation_agent import RecommendationAgent
 from .recommendation_engine import get_recommendation_engine
 from .live_state import get_live_state, update_live_state
+
+load_dotenv(override=True)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

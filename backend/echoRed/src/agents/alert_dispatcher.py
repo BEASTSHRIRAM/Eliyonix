@@ -4,6 +4,7 @@ Decides whether to send alerts and generates localized messages via Bedrock
 """
 from typing import Dict, Any, Optional
 import logging
+import os
 
 from ..grid_state import GridState
 from ..a2a_protocol import get_message_broker
@@ -14,6 +15,7 @@ from ..memory_store import (
     get_alert_dispatcher_initial_memory,
 )
 from ..bedrock_integration import get_alert_generator
+from ..smtp_mcp_tool import build_smtp_tool_args, execute_smtp_notify_tool
 from ..telegram_mcp_tool import build_telegram_tool_args, execute_telegram_notify_tool
 
 logger = logging.getLogger(__name__)
@@ -52,7 +54,7 @@ class AlertDispatcher:
                 alert_message = await self._generate_alert(state)
                 state["alert_message"] = alert_message
                 state["should_alert"] = True
-                state["telegram_status"] = await self._send_telegram_alert(state, alert_message)
+                state["telegram_status"] = await self._send_alert_tool(state, alert_message)
                 
                 # Log alert
                 await append_to_memory_list(
@@ -142,8 +144,8 @@ class AlertDispatcher:
         logger.info(f"Generated alert: {alert_message}")
         return alert_message
 
-    async def _send_telegram_alert(self, state: GridState, alert_message: str) -> Dict[str, Any]:
-        """Reason about delivery and execute the Telegram MCP tool."""
+    async def _send_alert_tool(self, state: GridState, alert_message: str) -> Dict[str, Any]:
+        """Reason about delivery and execute the configured notification MCP tool."""
         if not self._should_use_telegram_tool(state):
             return {
                 "enabled": False,
@@ -153,6 +155,26 @@ class AlertDispatcher:
                 "error": None,
             }
 
+        preferred_channel = os.getenv("ALERT_CHANNEL", "telegram").lower()
+        if preferred_channel == "smtp":
+            return await self._send_smtp_alert(state, alert_message)
+
+        return await self._send_telegram_alert(state, alert_message)
+
+    async def _send_smtp_alert(self, state: GridState, alert_message: str) -> Dict[str, Any]:
+        """Execute the SMTP MCP notification tool."""
+        sensor_data = state["sensor_data"]
+        tool_args = build_smtp_tool_args(
+            sensor_data=sensor_data,
+            alert_message=alert_message,
+            fault_type=state.get("fault_type"),
+            confidence=state["anomaly_score"],
+        )
+        logger.info("Alert dispatcher chose MCP tool '%s'", tool_args["tool_name"])
+        return await execute_smtp_notify_tool(tool_args)
+
+    async def _send_telegram_alert(self, state: GridState, alert_message: str) -> Dict[str, Any]:
+        """Execute the Telegram MCP notification tool."""
         sensor_data = state["sensor_data"]
         tool_args = build_telegram_tool_args(
             sensor_data=sensor_data,
